@@ -1,0 +1,16 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "yinxiang-mcp-worker",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-15",
+  "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+    "YINXIANG_NOTESTORE_URL": "https://app.yinxiang.com/shard/s6/notestore",
+    "UPSTREAM_TIMEOUT_MS": "15000",
+    "MAX_RESPONSE_BYTES": "950000"
+  },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  }
+}

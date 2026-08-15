@@ -1,0 +1,27 @@
+{
+  "name": "yinxiang-mcp-worker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A secured Cloudflare Worker MCP gateway for Yinxiang NoteStore (EDAM/Thrift).",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "deploy:dry": "wrangler deploy --dry-run",
+    "types": "wrangler types",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "check": "npm run types && npm run typecheck && npm test && npm run deploy:dry"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "2.0.0",
+    "agents": "0.20.1",
+    "evernote": "2.0.5",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2",
+    "vitest": "4.1.10",
+    "wrangler": "4.123.0"
+  }
+}
