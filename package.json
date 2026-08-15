@@ -17,6 +17,7 @@
     "@modelcontextprotocol/server": "2.0.0",
     "agents": "0.20.1",
     "evernote": "2.0.5",
+    "jose": "6.2.8",
     "zod": "4.4.3"
   },
   "devDependencies": {

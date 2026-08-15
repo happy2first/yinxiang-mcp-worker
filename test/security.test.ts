@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assertNoDeletionSemantics, isAuthorized, validateNoteStoreUrl } from "../src/security";
+import { assertNoDeletionSemantics, normalizeTeamDomain, validateNoteStoreUrl, verifyAccess } from "../src/security";
 
 describe("security policy", () => {
   it("pins the upstream to the Yinxiang NoteStore host and path", () => {
@@ -13,10 +13,15 @@ describe("security policy", () => {
     expect(() => assertNoDeletionSemantics("manageNotebookShares", { parameters: { unshares: [{ longIdentifier: 1 }] } })).toThrow(/Deletion policy/);
   });
 
-  it("requires a long bearer access token", async () => {
-    const token = "a".repeat(48);
-    const request = new Request("https://worker.example/mcp", { headers: { Authorization: `Bearer ${token}` } });
-    await expect(isAuthorized(request, token)).resolves.toBe(true);
-    await expect(isAuthorized(request, "short")).resolves.toBe(false);
+  it("pins the Cloudflare Access issuer and requires its JWT", async () => {
+    expect(normalizeTeamDomain("https://liao8top.cloudflareaccess.com/")).toBe("https://liao8top.cloudflareaccess.com");
+    expect(() => normalizeTeamDomain("https://example.com")).toThrow();
+    const request = new Request("https://worker.example/mcp");
+    await expect(
+      verifyAccess(request, {
+        TEAM_DOMAIN: "https://liao8top.cloudflareaccess.com",
+        POLICY_AUD: "test-audience"
+      })
+    ).rejects.toThrow(/Missing Cloudflare Access JWT/);
   });
 });

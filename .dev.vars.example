@@ -1,4 +1,3 @@
 YINXIANG_DEVELOPER_TOKEN=replace-with-a-development-token
-MCP_ACCESS_TOKEN=replace-with-a-long-random-access-token
+POLICY_AUD=replace-with-cloudflare-access-application-aud
 YINXIANG_NOTESTORE_URL=https://app.yinxiang.com/shard/s6/notestore
-

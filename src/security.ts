@@ -1,38 +1,35 @@
-const encoder = new TextEncoder();
+import { createRemoteJWKSet, jwtVerify, type JWTPayload } from "jose";
 
-export function extractBearerToken(request: Request): string | null {
-  const authorization = request.headers.get("authorization");
-  if (!authorization) return null;
-  const match = /^Bearer\s+(.+)$/i.exec(authorization);
-  return match?.[1] ?? null;
+export interface AccessConfig {
+  readonly TEAM_DOMAIN?: string;
+  readonly POLICY_AUD?: string;
 }
 
-export async function timingSafeEqual(left: string, right: string): Promise<boolean> {
-  const leftBytes = encoder.encode(left);
-  const rightBytes = encoder.encode(right);
-  const maxLength = Math.max(leftBytes.length, rightBytes.length, 1);
-  const paddedLeft = new Uint8Array(maxLength);
-  const paddedRight = new Uint8Array(maxLength);
-  paddedLeft.set(leftBytes);
-  paddedRight.set(rightBytes);
-
-  const [leftDigest, rightDigest] = await Promise.all([
-    crypto.subtle.digest("SHA-256", paddedLeft),
-    crypto.subtle.digest("SHA-256", paddedRight)
-  ]);
-  const leftHash = new Uint8Array(leftDigest);
-  const rightHash = new Uint8Array(rightDigest);
-  let mismatch = leftBytes.length ^ rightBytes.length;
-  for (let index = 0; index < leftHash.length; index += 1) {
-    mismatch |= leftHash[index]! ^ rightHash[index]!;
+export function normalizeTeamDomain(value: string | undefined): string {
+  if (!value) throw new Error("Missing TEAM_DOMAIN");
+  const url = new URL(value);
+  if (url.protocol !== "https:" || !url.hostname.endsWith(".cloudflareaccess.com") || url.pathname !== "/") {
+    throw new Error("TEAM_DOMAIN must be an HTTPS cloudflareaccess.com origin");
   }
-  return mismatch === 0;
+  url.search = "";
+  url.hash = "";
+  return url.toString().replace(/\/$/, "");
 }
 
-export async function isAuthorized(request: Request, expectedToken: string | undefined): Promise<boolean> {
-  if (!expectedToken || expectedToken.length < 32) return false;
-  const suppliedToken = extractBearerToken(request);
-  return suppliedToken ? timingSafeEqual(suppliedToken, expectedToken) : false;
+export async function verifyAccess(request: Request, env: AccessConfig): Promise<JWTPayload> {
+  const teamDomain = normalizeTeamDomain(env.TEAM_DOMAIN);
+  if (!env.POLICY_AUD) throw new Error("Missing POLICY_AUD");
+
+  const token = request.headers.get("cf-access-jwt-assertion");
+  if (!token) throw new Error("Missing Cloudflare Access JWT");
+
+  const jwks = createRemoteJWKSet(new URL(`${teamDomain}/cdn-cgi/access/certs`));
+  return (
+    await jwtVerify(token, jwks, {
+      issuer: teamDomain,
+      audience: env.POLICY_AUD
+    })
+  ).payload;
 }
 
 export function validateNoteStoreUrl(value: string): string {

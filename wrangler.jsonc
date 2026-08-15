@@ -4,8 +4,10 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-08-15",
   "compatibility_flags": ["nodejs_compat"],
+  "keep_vars": true,
   "vars": {
     "YINXIANG_NOTESTORE_URL": "https://app.yinxiang.com/shard/s6/notestore",
+    "TEAM_DOMAIN": "https://liao8top.cloudflareaccess.com",
     "UPSTREAM_TIMEOUT_MS": "15000",
     "MAX_RESPONSE_BYTES": "950000"
   },

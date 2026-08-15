@@ -7,20 +7,22 @@
 
 ## 安全边界
 
-- `YINXIANG_DEVELOPER_TOKEN` 和 `MCP_ACCESS_TOKEN` 都使用 Cloudflare Secret，不写入代码或日志。
+- 使用与 `personal-mail-mcp` 相同的 Cloudflare Access 认证：边缘策略先拦截，Worker 再验证 `Cf-Access-Jwt-Assertion` 的签名、issuer 和 audience。
+- `YINXIANG_DEVELOPER_TOKEN` 使用 Cloudflare Secret，不写入代码或日志。
 - NoteStore URL 只允许 `https://app.yinxiang.com/shard/{id}/notestore`，避免 SSRF。
 - 删除、永久删除、批量去标签、删除应用数据项、取消共享等方法不注册。
 - `updateNote`/`updateNoteIfUsnMatches` 不能设置 `active=false`；分享管理不能携带 unshare 列表。
 - 请求参数拒绝缺失字段和未知字段；响应默认限制为 950,000 字节。
 
-> 这是个人服务的轻量 Bearer 保护，不是 MCP OAuth 2.1。若要直接接入只接受 OAuth 的客户端，应在下一阶段增加 Workers OAuth Provider。
+> Cloudflare Access 可在控制台为 MCP 客户端启用 Managed OAuth；Worker 端不保存共享访问密码，只验证 Access 签发的短期 JWT。
 
 ## 环境变量
 
 | 名称 | 类型 | 说明 |
 |---|---|---|
 | `YINXIANG_DEVELOPER_TOKEN` | Secret | 一周有效的 Developer Token |
-| `MCP_ACCESS_TOKEN` | Secret | 至少 32 字符的 MCP 入口访问密钥 |
+| `POLICY_AUD` | Variable | Cloudflare Access 应用的 Application Audience (AUD) Tag |
+| `TEAM_DOMAIN` | Variable | Cloudflare Zero Trust Team Domain；默认与个人邮箱 Worker 相同 |
 | `YINXIANG_NOTESTORE_URL` | Variable | 默认 `https://app.yinxiang.com/shard/s6/notestore` |
 | `UPSTREAM_TIMEOUT_MS` | Variable | 默认 15000 |
 | `MAX_RESPONSE_BYTES` | Variable | 默认 950000 |
@@ -35,14 +37,13 @@ npm run types
 npm run dev
 ```
 
-健康检查：`GET /health`。MCP 地址：`POST /mcp`，请求头为 `Authorization: Bearer <MCP_ACCESS_TOKEN>`。
+公共状态页：`GET /`。受 Cloudflare Access 保护的健康检查：`GET /health`。MCP 地址：`POST /mcp`。
 
 ## 部署
 
 ```bash
 npx wrangler login
 printf '%s' "$YINXIANG_DEVELOPER_TOKEN" | npx wrangler secret put YINXIANG_DEVELOPER_TOKEN
-printf '%s' "$MCP_ACCESS_TOKEN" | npx wrangler secret put MCP_ACCESS_TOKEN
 npm run check
 npm run deploy
 ```
