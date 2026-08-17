@@ -14,12 +14,12 @@ describe("security policy", () => {
   });
 
   it("pins the Cloudflare Access issuer and requires its JWT", async () => {
-    expect(normalizeTeamDomain("https://liao8top.cloudflareaccess.com/")).toBe("https://liao8top.cloudflareaccess.com");
+    expect(normalizeTeamDomain("https://example.cloudflareaccess.com/")).toBe("https://example.cloudflareaccess.com");
     expect(() => normalizeTeamDomain("https://example.com")).toThrow();
     const request = new Request("https://worker.example/mcp");
     await expect(
       verifyAccess(request, {
-        TEAM_DOMAIN: "https://liao8top.cloudflareaccess.com",
+        TEAM_DOMAIN: "https://example.cloudflareaccess.com",
         POLICY_AUD: "test-audience"
       })
     ).rejects.toThrow(/Missing Cloudflare Access JWT/);
